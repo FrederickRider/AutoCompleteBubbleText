@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Spannable;
@@ -16,8 +15,8 @@ import android.text.TextWatcher;
 import android.text.method.TextKeyListener;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -34,6 +33,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
 
     private final Hashtable<String, T> mSelectedItems = new Hashtable<String, T>();
+    List<String> orderedItems = new ArrayList<String>();
 
     private int bubbleDrawableResource;
     private ListView listView;
@@ -57,6 +57,8 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
     protected void init(){
         setInitialComponents();
+
+        setFreezesText(true);
 
         final BubbleWatcher watcher = new BubbleWatcher(this, TextKeyListener.Capitalize.NONE, false);
         setKeyListener(watcher);
@@ -85,9 +87,9 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
                 final T item = (T) parent.getItemAtPosition(position);
                 if (listView.isItemChecked(position)) {
-                    addSelectedItem(item);
+                    addCheckedItem(item);
                 } else {
-                    removeSelectedItem(item);
+                    removeCheckedItem(item);
                 }
                 setString();
 
@@ -96,18 +98,14 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         });
 
         filterData("");
+
         adapter.notifyDataSetChanged();
-    }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.d(TAG, "Height: " + calculateLineHeight());
-
-        super.onMeasure(widthMeasureSpec, calculateLineHeight());
+        setMinHeight(getPaddingBottom() + getPaddingTop() + calculateLineHeight());
     }
 
     private void setInitialComponents() {
-        listView = new ListView(getContext());
+        listView = onCreateListView();
 
         if(listView == null)
             throw new IllegalStateException("The ListView cannot be null");
@@ -127,7 +125,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     }
 
     private String getLastCommaValue() {
-        final String[] commaDelineated = fullText.split(",");
+        final String[] commaDelineated = fullText.split(getDelimiter().trim());
         return commaDelineated.length == 0 ? "" : commaDelineated[commaDelineated.length - 1].trim();
     }
 
@@ -149,6 +147,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         Drawable bubbleDrawable = getResources().getDrawable(getBubbleLayout());
 
         int lineHeight = getLineHeight();
+
         Rect rect = new Rect();
         if(bubbleDrawable.getPadding(rect)){
             return lineHeight + rect.top + rect.bottom;
@@ -179,14 +178,21 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         }
     }
 
-    public void addSelectedItem(T item){
-        final String chatId = item.getId();
-        mSelectedItems.put(chatId, item);
+    public void addCheckedItem(T item){
+        final String id = item.getId();
+        mSelectedItems.put(id, item);
+        orderedItems.add(id);
     }
 
-    public void removeSelectedItem(T item){
+    public void removeCheckedItem(T item){
         final String id = item.getId();
         mSelectedItems.remove(id);
+        orderedItems.remove(id);
+    }
+
+    public void removeCheckedItem(String id){
+        mSelectedItems.remove(id);
+        orderedItems.remove(id);
     }
 
     public void addAllItems(List<T> allItems){
@@ -205,7 +211,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             String name = adapter.getItem(i).getReadableName();
 
             if(TextUtils.equals(name, itemName))
-                removeSelectedItem(adapter.getItem(i));
+                removeCheckedItem(adapter.getItem(i));
         }
 
         adapter.notifyDataSetChanged();
@@ -215,11 +221,15 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         return mSelectedItems.size();
     }
 
+    protected String getDelimiter(){
+        return ", ";
+    }
+
     public void setString(){
         final SpannableStringBuilder sb = new SpannableStringBuilder();
-        for (String chatId : mSelectedItems.keySet()) {
+        for (String chatId : orderedItems) {
             final T item = mSelectedItems.get(chatId);
-            String name = item.getReadableName();
+            String name = " " + item.getReadableName() + " ";
 
             TextView tv = createItemTextView(name);
             tv.setTextColor(getResources().getColor(android.R.color.black));
@@ -233,7 +243,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             final int end = sb.length();
             sb.setSpan(new ImageSpan(bd, chatId), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-            sb.append(", ");
+            sb.append(getDelimiter());
         }
         setText(sb);
 
@@ -305,8 +315,8 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
                 int spanEnd = container.getSpanEnd();
 
                 if (message.length() >= spanEnd && spanStart != spanEnd){
-                    String readableName = span.getSource();
-                    editText.removeItem(readableName);
+                    String id = span.getSource();
+                    editText.removeCheckedItem(id);
                     editText.setString();
                     removeList.add(container);
                 }
@@ -340,4 +350,5 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             return InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
         }
     }
+
 }
