@@ -1,10 +1,12 @@
 package com.mycardboarddreams.autocompletebubbletext.samplelist;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import com.mycardboarddreams.autocompletebubbletext.MultiSelectEditText;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,6 +38,17 @@ public class SampleEditText extends MultiSelectEditText<SampleItem> {
 
         clearAllItems();
 
-        addAllItems(sampleItems);
+        if(TextUtils.isEmpty(lastCommaValue)){
+            addAllItems(sampleItems);
+            return;
+        }
+
+        List<SampleItem> filtered = new ArrayList<SampleItem>();
+        for(SampleItem item : sampleItems){
+            if(item.getReadableName().toLowerCase().startsWith(lastCommaValue.toLowerCase()))
+                filtered.add(item);
+        }
+
+        addAllItems(filtered);
     }
 }
