@@ -8,9 +8,6 @@ import com.mycardboarddreams.autocompletebubbletext.MultiSelectEditText;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by Hando on 1/26/2015.
- */
 public class SampleEditText extends MultiSelectEditText<SampleItem> {
 
     List<SampleItem> sampleItems;

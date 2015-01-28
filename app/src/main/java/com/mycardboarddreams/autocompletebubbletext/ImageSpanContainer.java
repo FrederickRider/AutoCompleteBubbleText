@@ -2,10 +2,6 @@ package com.mycardboarddreams.autocompletebubbletext;
 
 import android.text.style.ImageSpan;
 
-/**
- * Created by Hando on 1/27/2015.
- */
-
 public class ImageSpanContainer {
     private int mSpanStart;
     private int mSpanEnd;

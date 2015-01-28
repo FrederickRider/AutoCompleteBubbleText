@@ -55,7 +55,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     protected void init(){
         setInitialComponents();
 
-        final BubbleWatcher watcher = new BubbleWatcher(TextKeyListener.Capitalize.NONE, false);
+        final BubbleWatcher watcher = new BubbleWatcher(this, TextKeyListener.Capitalize.NONE, false);
         setKeyListener(watcher);
 
         addTextChangedListener(new TextWatcher() {
@@ -247,18 +247,20 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         return new BitmapDrawable(getContext().getResources(), viewBmp);
     }
 
-    public class BubbleWatcher extends TextKeyListener implements TextWatcher {
-        private ArrayList<ImageSpanContainer> mBubblesToRemove = new ArrayList<ImageSpanContainer>();
+    public static class BubbleWatcher extends TextKeyListener implements TextWatcher {
+        private final ArrayList<ImageSpanContainer> mBubblesToRemove = new ArrayList<ImageSpanContainer>();
+        private final MultiSelectEditText editText;
 
-        public BubbleWatcher(Capitalize cap, boolean autotext) {
+        public BubbleWatcher(MultiSelectEditText editText, Capitalize cap, boolean autotext) {
             super(cap, autotext);
+            this.editText = editText;
         }
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             if (count > 0) {
                 int end = start + count;
-                Editable message = getEditableText();
+                Editable message = editText.getEditableText();
                 ImageSpan[] list = message.getSpans(start, end, ImageSpan.class);
 
                 for (ImageSpan span : list) {
@@ -273,7 +275,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            Editable message = getEditableText();
+            Editable message = editText.getEditableText();
 
             List<ImageSpanContainer> removeList = new ArrayList<ImageSpanContainer>();
             for (ImageSpanContainer container : mBubblesToRemove){
@@ -283,8 +285,8 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
                 if (message.length() >= spanEnd && spanStart != spanEnd){
                     String readableName = span.getSource();
-                    removeItem(readableName);
-                    setString();
+                    editText.removeItem(readableName);
+                    editText.setString();
                     removeList.add(container);
                 }
             }
@@ -304,7 +306,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         public void onSpanRemoved(Spannable text, Object what, int start, int end) {
             if (what instanceof ImageSpan){
                 String readableName = ((ImageSpan) what).getSource();
-                removeItem(readableName);
+                editText.removeItem(readableName);
             }
         }
 
