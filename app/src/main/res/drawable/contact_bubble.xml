@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/background_color_drawer_light_blue"/>
-    <padding android:left="7dp" android:top="7dp"
-        android:right="7dp" android:bottom="7dp" />
+    <solid android:color="@color/default_bubble_background_color"/>
+    <padding android:left="7dp"
+        android:top="7dp"
+        android:right="7dp"
+        android:bottom="7dp" />
     <corners android:radius="6dp" />
 </shape>

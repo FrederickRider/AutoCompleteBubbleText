@@ -132,7 +132,20 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     protected abstract void filterData(String lastCommaValue);
 
     protected ArrayAdapter<T> onCreateAdapter(){
-        return new ArrayAdapter<T>(getContext(), getListItemLayout());
+        return new ArrayAdapter<T>(getContext(), getListItemLayout()){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = super.getView(position, convertView, parent);
+                v.setBackgroundResource(R.drawable.list_item_background);
+                return v;
+            }
+        };
+    }
+
+    protected ListView onCreateListView(){
+        ListView lv = new ListView(getContext());
+        lv.setSelector(R.drawable.selector_list_checked);
+        return lv;
     }
 
     protected int getListItemLayout(){
