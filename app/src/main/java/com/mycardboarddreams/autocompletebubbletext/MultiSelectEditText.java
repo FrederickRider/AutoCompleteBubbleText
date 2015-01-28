@@ -3,7 +3,10 @@ package com.mycardboarddreams.autocompletebubbletext;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ShapeDrawable;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Spannable;
@@ -96,6 +99,13 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         adapter.notifyDataSetChanged();
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        Log.d(TAG, "Height: " + calculateLineHeight());
+
+        super.onMeasure(widthMeasureSpec, calculateLineHeight());
+    }
+
     private void setInitialComponents() {
         listView = new ListView(getContext());
 
@@ -133,6 +143,17 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
     protected int getBubbleLayout(){
         return R.drawable.contact_bubble;
+    }
+
+    protected int calculateLineHeight(){
+        Drawable bubbleDrawable = getResources().getDrawable(getBubbleLayout());
+
+        int lineHeight = getLineHeight();
+        Rect rect = new Rect();
+        if(bubbleDrawable.getPadding(rect)){
+            return lineHeight + rect.top + rect.bottom;
+        }
+        return lineHeight;
     }
 
     public ListView getListView(){
