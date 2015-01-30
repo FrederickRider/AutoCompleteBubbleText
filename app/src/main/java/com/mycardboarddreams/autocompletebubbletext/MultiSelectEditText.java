@@ -126,7 +126,22 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
     private String getLastCommaValue() {
         final String[] commaDelineated = fullText.split(getDelimiter().trim());
-        return commaDelineated.length == 0 ? "" : commaDelineated[commaDelineated.length - 1].trim();
+        if(commaDelineated.length == 0)
+            return "";
+
+        Editable spannedText = getEditableText();
+
+        ImageSpan[] spans = spannedText.getSpans(0, fullText.length(), ImageSpan.class);
+        String lastString = commaDelineated[commaDelineated.length - 1].trim();
+
+        if(spans.length == 0)
+            return lastString;
+
+        int spanEndPoint = spannedText.getSpanEnd(spans[spans.length - 1]);
+        if(spanEndPoint == spannedText.length() - 1)
+            return "";
+
+        return lastString;
     }
 
     protected abstract void filterData(String lastCommaValue);
