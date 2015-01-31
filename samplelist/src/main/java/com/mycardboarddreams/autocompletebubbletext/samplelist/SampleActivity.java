@@ -26,7 +26,9 @@ public class SampleActivity extends Activity {
                 new SampleItem("Aaron LastName"),
                 new SampleItem("Cameron Chimes"),
                 new SampleItem("Tim Gibbons"),
-                new SampleItem("Gary Styles")
+                new SampleItem("Gary Styles"),
+                new SampleItem("Bart Thompson"),
+                new SampleItem("Abagail B.D.E.")
         );
 
         editText.addAllItems(sampleItems);
