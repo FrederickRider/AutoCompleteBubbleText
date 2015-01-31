@@ -64,23 +64,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         final BubbleWatcher watcher = new BubbleWatcher(this, TextKeyListener.Capitalize.NONE, false);
         setKeyListener(watcher);
 
-        addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                final String lastCommaValue = getLastCommaValue();
-                updateFilteredItems(lastCommaValue);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                updateListViewCheckState();
-            }
-        });
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -214,7 +197,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
      * @return the resource id of the bubble drawable
      */
     protected int getBubbleResource(){
-        return R.drawable.contact_bubble;
+        return R.drawable.sample_bubble;
     }
 
     protected int calculateLineHeight(){
@@ -334,6 +317,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         int position = getText().length() - 1;
         if (position < 0) position = 0;
         setSelection(position);
+
+        updateFilteredItems(getLastCommaValue());
     }
 
     public Hashtable<String, T> getCheckedItems(){
@@ -362,20 +347,18 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return new BitmapDrawable(getContext().getResources(), viewBmp);
     }
 
-    private static class BubbleWatcher extends TextKeyListener implements TextWatcher {
+    private class BubbleWatcher extends TextKeyListener implements TextWatcher {
         private final ArrayList<ImageSpanContainer> mBubblesToRemove = new ArrayList<ImageSpanContainer>();
-        private final MultiSelectEditText editText;
 
         public BubbleWatcher(MultiSelectEditText editText, Capitalize cap, boolean autotext) {
             super(cap, autotext);
-            this.editText = editText;
         }
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             if (count > 0) {
                 int end = start + count;
-                Editable message = editText.getEditableText();
+                Editable message = getEditableText();
                 ImageSpan[] list = message.getSpans(start, end, ImageSpan.class);
 
                 for (ImageSpan span : list) {
@@ -390,7 +373,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            Editable message = editText.getEditableText();
+            final String lastCommaValue = getLastCommaValue();
+            updateFilteredItems(lastCommaValue);
+
+            Editable message = getEditableText();
 
             List<ImageSpanContainer> removeList = new ArrayList<ImageSpanContainer>();
             for (ImageSpanContainer container : mBubblesToRemove){
@@ -400,8 +386,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
                 if (message.length() >= spanEnd && spanStart != spanEnd){
                     String id = span.getSource();
-                    editText.removeCheckedItem(id);
-                    editText.setString();
+                    removeCheckedItem(id);
+                    setString();
                     removeList.add(container);
                 }
             }
@@ -411,6 +397,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         @Override
         public void afterTextChanged(Editable s) {
+            updateListViewCheckState();
         }
 
         @Override
@@ -421,7 +408,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         public void onSpanRemoved(Spannable text, Object what, int start, int end) {
             if (what instanceof ImageSpan){
                 String readableName = ((ImageSpan) what).getSource();
-                editText.removeItem(readableName);
+                removeItem(readableName);
             }
         }
 
