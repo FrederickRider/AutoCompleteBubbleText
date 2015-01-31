@@ -5,7 +5,7 @@
     tools:context=".SampleActivity"
     android:orientation="vertical">
 
-    <com.mycardboarddreams.autocompletebubbletext.samplelist.SampleEditText
+    <com.mycardboarddreams.autocompletebubbletext.MultiSelectEditText
         android:id="@+id/auto_text_complete"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

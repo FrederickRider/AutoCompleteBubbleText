@@ -37,7 +37,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     private int bubbleDrawableResource;
     private ListView listView;
-    private String fullText;
     private ArrayAdapter<T> adapter;
 
     private List<T> originalItems;
@@ -72,7 +71,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                fullText = s.toString();
                 final String lastCommaValue = getLastCommaValue();
                 updateFilteredItems(lastCommaValue);
             }
@@ -116,7 +114,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
             adapter.notifyDataSetChanged();
         }
-
     }
 
     private void setInitialComponents() {
@@ -140,9 +137,12 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     private String getLastCommaValue() {
-        final String[] commaDelineated = fullText.split(getDelimiter().trim());
-        if(commaDelineated.length == 0)
+        String fullText = getText().toString();
+
+        if(TextUtils.isEmpty(fullText))
             return "";
+
+        final String[] commaDelineated = fullText.split(getDelimiter().trim());
 
         Editable spannedText = getEditableText();
 
@@ -159,7 +159,13 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return lastString;
     }
 
-    protected List<T> filterData(List<T> originalItems, String lastCommaValue){
+    /**
+     * Override this the replace the filtering of list items.
+     * @param originalItems Original full list of items
+     * @param lastCommaValue text after the last delimiter
+     * @return a filtered list of the same items
+     */
+    protected List<T> filterData(final List<T> originalItems, final String lastCommaValue){
 
         if(TextUtils.isEmpty(lastCommaValue)){
             return originalItems;
@@ -174,6 +180,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return filtered;
     }
 
+    /**
+     * Override this to customize the adapter
+     * @return a custom ArrayAdapter
+     */
     protected ArrayAdapter<T> onCreateAdapter(){
         return new ArrayAdapter<T>(getContext(), getListItemLayout()){
             @Override
@@ -185,6 +195,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         };
     }
 
+    /**
+     * Override this to customize the ListView
+     * @return a custom ListView
+     */
     protected ListView onCreateListView(){
         ListView lv = new ListView(getContext());
         lv.setSelector(R.drawable.selector_list_checked);
@@ -195,6 +209,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return android.R.layout.simple_list_item_1;
     }
 
+    /**
+     * Override this to customize the drawable resource behind the individual items
+     * @return the resource id of the bubble drawable
+     */
     protected int getBubbleResource(){
         return R.drawable.contact_bubble;
     }
@@ -211,7 +229,11 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return lineHeight;
     }
 
-    public ListView getListView(){
+    /**
+     * Fetch the ListView associated with this MultiSelectEditText, that was created in onCreateListView()
+     * @return the ListView associated with this MultiSelectEditText
+     */
+    public final ListView getListView(){
         return listView;
     }
 
@@ -252,32 +274,37 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void addAllItems(List<T> allItems){
         originalItems = allItems;
-        for(T item : allItems)
-            adapter.add(item);
-
-        adapter.notifyDataSetChanged();
+        updateFilteredItems(getLastCommaValue());
     }
 
     public void clearAllItems(){
-        adapter.clear();
+        originalItems.clear();
     }
 
     public void removeItem(String itemName){
 
-        for(int i = 0; i < adapter.getCount(); i++) {
-            String name = adapter.getItem(i).getReadableName();
+        List<T> newOriginalItems = new ArrayList<T>();
 
-            if(TextUtils.equals(name, itemName))
-                removeCheckedItem(adapter.getItem(i));
+        for(int i = 0; i < originalItems.size(); i++) {
+            String name = originalItems.get(i).getReadableName();
+
+            if(!TextUtils.equals(name, itemName))
+                newOriginalItems.add(originalItems.get(i));
         }
 
-        adapter.notifyDataSetChanged();
+        originalItems = newOriginalItems;
+
+        updateFilteredItems(getLastCommaValue());
     }
 
     public int getCheckedItemsCount(){
         return mSelectedItems.size();
     }
 
+    /**
+     * Override this to choose a different delimiter between the items
+     * @return the delimiter string
+     */
     protected String getDelimiter(){
         return ", ";
     }
@@ -313,14 +340,14 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return mSelectedItems;
     }
 
-    public TextView createItemTextView(String text){
+    protected TextView createItemTextView(String text){
         TextView tv = new TextView(getContext());
         tv.setText(text);
         tv.setBackgroundResource(bubbleDrawableResource);
         return tv;
     }
 
-    public BitmapDrawable convertViewToDrawable(View textView) {
+    protected BitmapDrawable convertViewToDrawable(View textView) {
         int spec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         textView.measure(spec, spec);
         textView.layout(0, 0, textView.getMeasuredWidth(), textView.getMeasuredHeight());
@@ -335,7 +362,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return new BitmapDrawable(getContext().getResources(), viewBmp);
     }
 
-    public static class BubbleWatcher extends TextKeyListener implements TextWatcher {
+    private static class BubbleWatcher extends TextKeyListener implements TextWatcher {
         private final ArrayList<ImageSpanContainer> mBubblesToRemove = new ArrayList<ImageSpanContainer>();
         private final MultiSelectEditText editText;
 
