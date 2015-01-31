@@ -11,13 +11,13 @@
         android:layout_height="wrap_content"
         android:textColor="@android:color/black"
         android:padding="5dp"
-        android:background="@android:color/holo_blue_dark"/>
+        android:background="#FFEEEEEE"/>
 
     <FrameLayout
         android:id="@+id/auto_list_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@android:color/holo_orange_dark"/>
+        android:background="#FF666666"/>
 
 </LinearLayout>
