@@ -16,18 +16,20 @@ public class SampleEditText extends MultiSelectEditText<SampleItem> {
 
     public SampleEditText(Context context) {
         super(context);
+        addSampleItems();
     }
 
     public SampleEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
+        addSampleItems();
     }
 
     public SampleEditText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        addSampleItems();
     }
 
-    @Override
-    protected void filterData(String lastCommaValue) {
+    protected void addSampleItems() {
 
         sampleItems = Arrays.asList(
                 new SampleItem("Aaron LastName"),
@@ -36,19 +38,6 @@ public class SampleEditText extends MultiSelectEditText<SampleItem> {
                 new SampleItem("Gary Styles")
         );
 
-        clearAllItems();
-
-        if(TextUtils.isEmpty(lastCommaValue)){
-            addAllItems(sampleItems);
-            return;
-        }
-
-        List<SampleItem> filtered = new ArrayList<SampleItem>();
-        for(SampleItem item : sampleItems){
-            if(item.getReadableName().toLowerCase().startsWith(lastCommaValue.toLowerCase()))
-                filtered.add(item);
-        }
-
-        addAllItems(filtered);
+        addAllItems(sampleItems);
     }
 }

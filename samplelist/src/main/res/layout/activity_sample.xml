@@ -13,6 +13,7 @@
         android:padding="5dp"
         android:background="#FFEEEEEE"/>
 
+    <!-- Layout where the list will go -->
     <FrameLayout
         android:id="@+id/auto_list_container"
         android:layout_width="match_parent"

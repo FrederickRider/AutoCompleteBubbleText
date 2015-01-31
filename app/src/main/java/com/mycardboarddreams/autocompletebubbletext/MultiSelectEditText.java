@@ -29,7 +29,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
-public abstract class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
+public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
 
     private final Hashtable<String, T> mSelectedItems = new Hashtable<String, T>();
@@ -39,6 +39,8 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     private ListView listView;
     private String fullText;
     private ArrayAdapter<T> adapter;
+
+    private List<T> originalItems;
 
     public MultiSelectEditText(Context context) {
         super(context);
@@ -72,7 +74,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 fullText = s.toString();
                 final String lastCommaValue = getLastCommaValue();
-                filterData(lastCommaValue);
+                updateFilteredItems(lastCommaValue);
             }
 
             @Override
@@ -97,11 +99,24 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             }
         });
 
-        filterData("");
-
-        adapter.notifyDataSetChanged();
+        updateFilteredItems("");
 
         setMinHeight(getPaddingBottom() + getPaddingTop() + calculateLineHeight());
+    }
+
+    private void updateFilteredItems(String lastValue){
+        if(originalItems != null) {
+            List<T> filtered = filterData(originalItems, lastValue);
+
+            adapter.clear();
+
+            for (T item : filtered) {
+                adapter.add(item);
+            }
+
+            adapter.notifyDataSetChanged();
+        }
+
     }
 
     private void setInitialComponents() {
@@ -118,7 +133,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
             throw new IllegalStateException("The Adapter cannot be null");
 
         listView.setAdapter(adapter);
-        bubbleDrawableResource = getBubbleLayout();
+        bubbleDrawableResource = getBubbleResource();
 
         if(bubbleDrawableResource == 0)
             throw new IllegalStateException("The resource drawable for the bubble cannot be null");
@@ -144,7 +159,20 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         return lastString;
     }
 
-    protected abstract void filterData(String lastCommaValue);
+    protected List<T> filterData(List<T> originalItems, String lastCommaValue){
+
+        if(TextUtils.isEmpty(lastCommaValue)){
+            return originalItems;
+        }
+
+        List<T> filtered = new ArrayList<T>();
+        for(T item : originalItems){
+            if(item.getReadableName().toLowerCase().startsWith(lastCommaValue.toLowerCase()))
+                filtered.add(item);
+        }
+
+        return filtered;
+    }
 
     protected ArrayAdapter<T> onCreateAdapter(){
         return new ArrayAdapter<T>(getContext(), getListItemLayout()){
@@ -167,12 +195,12 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
         return android.R.layout.simple_list_item_1;
     }
 
-    protected int getBubbleLayout(){
+    protected int getBubbleResource(){
         return R.drawable.contact_bubble;
     }
 
     protected int calculateLineHeight(){
-        Drawable bubbleDrawable = getResources().getDrawable(getBubbleLayout());
+        Drawable bubbleDrawable = getResources().getDrawable(getBubbleResource());
 
         int lineHeight = getLineHeight();
 
@@ -214,8 +242,7 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
 
     public void removeCheckedItem(T item){
         final String id = item.getId();
-        mSelectedItems.remove(id);
-        orderedItems.remove(id);
+        removeCheckedItem(id);
     }
 
     public void removeCheckedItem(String id){
@@ -224,9 +251,11 @@ public abstract class MultiSelectEditText<T extends MultiSelectItem> extends Edi
     }
 
     public void addAllItems(List<T> allItems){
-
+        originalItems = allItems;
         for(T item : allItems)
             adapter.add(item);
+
+        adapter.notifyDataSetChanged();
     }
 
     public void clearAllItems(){
