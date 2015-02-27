@@ -40,9 +40,82 @@ The sample activity shows a basic usage.
 </LinearLayout>
 ````````````````
 
-### You must override:
+Create some object that implements MultiSelectItem
 
-getListView() - Once the ListView is created, you must fetch it and add it as a child of some other layout.
+````````````````
+public class SampleItem implements MultiSelectItem {
+
+    private final String mReadableName;
+    private final String mId;
+
+    public SampleItem(String readableName){
+        mReadableName = readableName;
+        mId = String.valueOf(readableName.hashCode());
+    }
+
+    @Override
+    public String getId() {
+        return mId;
+    }
+
+    @Override
+    public String getReadableName() {
+        return mReadableName;
+    }
+
+    @Override
+    public String toString() {
+        return mReadableName;
+    }
+}
+````````````````
+
+Once you've set up the layout, pull the ListView out of the EditText, and put it wherever in the layout you like:
+
+````````````````
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_sample);
+
+    //Find the MultiSelectEditText in the layout
+    MultiSelectEditText editText = (MultiSelectEditText)findViewById(R.id.auto_text_complete);
+
+    /**
+     * Add some sample items
+     * The type of item can be anything that implements MultiSelectItem
+     */
+    List<SampleItem> sampleItems = Arrays.asList(
+            new SampleItem("Aaron LastName"),
+            new SampleItem("Cameron Chimes"),
+            new SampleItem("Tim Gibbons"),
+            new SampleItem("Gary Styles"),
+            new SampleItem("Bart Thompson"),
+            new SampleItem("Abagail B.D.E.")
+    );
+
+    editText.addAllItems(sampleItems);
+
+    //Pull out the ListView from the MultiSelectEditText
+    ListView list = editText.getListView();
+
+    //Add it to a ViewGroup somewhere else in the layout
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    list.setLayoutParams(params);
+
+    FrameLayout frame = (FrameLayout)findViewById(R.id.auto_list_container);
+    frame.addView(list);
+}
+````````````````
+
+### You must call getListView():
+
+````````````````
+/**
+ * Once the ListView is created, you must fetch
+ * it and add it as a child of some other layout.
+ */
+ListView getListView()
+````````````````
 
 
 ## Customization
@@ -51,12 +124,36 @@ You can customize most parts of the view.
 
 ### You may also override the following methods:
 
-onCreateListView() - To return a custom ListView.
-
-onCreateAdapter() - The return a custom Adapter, which (currently) must be an ArrayAdapter.
-
-getBubbleResource() - The resource representing the bubble drawable.
-
-getDelimiter() - Override this to return a different delimiter string.
-
-filterData(String lastCommaValue) - Gives you the last value after the delimiter (default is ','), return the filtered results.
+````````````````
+/**
+ * Override this to return a custom ListView.
+ */
+ListView onCreateListView()
+````````````````
+````````````````
+/**
+ * Override this to return a custom Adapter,
+ * which (currently) must be an ArrayAdapter.
+ */
+ArrayAdapter<T> onCreateAdapter()
+````````````````
+````````````````
+/**
+ * Override this to return the resource
+ * representing the bubble drawable.
+ */
+int getBubbleResource()
+````````````````
+````````````````
+/**
+ * Override this to return a different delimiter string.
+ */
+String getDelimiter()
+````````````````
+````````````````
+/**
+ * Override this to return filtered results given the last value
+ * after the delimiter (default is ','), lastCommaValue.
+ */
+filterData(String lastCommaValue)
+````````````````

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="default_bubble_background_color">#FFD6E0FB</color>
+    <color name="default_bubble_background_color">#FF66E09B</color>
     <color name="checked_color">#FFAAAAFF</color>
     <color name="unchecked_color">#00FFFFFF</color>
 </resources>
