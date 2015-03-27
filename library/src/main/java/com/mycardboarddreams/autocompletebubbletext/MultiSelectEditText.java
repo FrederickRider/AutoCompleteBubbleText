@@ -3,18 +3,24 @@ package com.mycardboarddreams.autocompletebubbletext;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.TextKeyListener;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
+import android.util.SparseBooleanArray;
+import android.view.AbsSavedState;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -32,7 +38,6 @@ import java.util.Set;
 public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
 
-    private final Hashtable<String, T> mSelectedItems = new Hashtable<String, T>();
     List<String> orderedItems = new ArrayList<String>();
 
     private int bubbleDrawableResource;
@@ -56,7 +61,26 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         init();
     }
 
-    protected void init(){
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Parcelable p = super.onSaveInstanceState();
+        SavedState state = new SavedState(p, listView.onSaveInstanceState(), orderedItems);
+        return state;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        SavedState wrapper = (SavedState)state;
+
+        if(listView != null) {
+            listView.onRestoreInstanceState(wrapper.listViewState);
+        }
+        updateListViewCheckState();
+
+        super.onRestoreInstanceState(wrapper.wrappedState);
+    }
+
+    private void init(){
         setInitialComponents();
 
         setFreezesText(true);
@@ -113,6 +137,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             throw new IllegalStateException("The Adapter cannot be null");
 
         listView.setAdapter(adapter);
+
         bubbleDrawableResource = getBubbleResource();
 
         if(bubbleDrawableResource == 0)
@@ -220,11 +245,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return listView;
     }
 
-
     private void updateListViewCheckState() {
         final int count = adapter.getCount();
-        final Hashtable<String, T> checkedContacts = getCheckedItems();
-        Set<String> ids = checkedContacts.keySet();
+
+        List<String> ids = orderedItems;
 
         for (int i = 0; i < count; i++){
             final T listItem = adapter.getItem(i);
@@ -241,7 +265,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void addCheckedItem(T item){
         final String id = item.getId();
-        mSelectedItems.put(id, item);
         orderedItems.add(id);
     }
 
@@ -251,12 +274,11 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     public void removeCheckedItem(String id){
-        mSelectedItems.remove(id);
         orderedItems.remove(id);
     }
 
     public void addAllItems(List<T> allItems){
-        originalItems = allItems;
+        originalItems = new ArrayList<T>(allItems);
         updateFilteredItems(getLastCommaValue());
     }
 
@@ -281,7 +303,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     public int getCheckedItemsCount(){
-        return mSelectedItems.size();
+        return orderedItems.size();
     }
 
     /**
@@ -294,21 +316,38 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void setString(){
         final SpannableStringBuilder sb = new SpannableStringBuilder();
-        for (String chatId : orderedItems) {
-            final T item = mSelectedItems.get(chatId);
-            String name = " " + item.getReadableName() + " ";
+        List<T> selectedItems = getCheckedItems();
+        for (final T item : selectedItems) {
+            String name = item.getReadableName();
+            if(TextUtils.isEmpty(name))
+                continue;
 
             TextView tv = createItemTextView(name);
             tv.setTextColor(getResources().getColor(android.R.color.black));
 
             BitmapDrawable bd = convertViewToDrawable(tv);
-            bd.setBounds(0, 0, bd.getIntrinsicWidth(), bd.getIntrinsicHeight());
 
             sb.append(name);
 
             final int start = sb.length() - name.length();
             final int end = sb.length();
-            sb.setSpan(new ImageSpan(bd, chatId), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new ImageSpan(bd, item.getId()){
+                @Override
+                public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+                    if(text instanceof Spannable){
+                        Spannable spanned = ((Spannable)text);
+                        ImageSpan[] includingSpans = spanned.getSpans(0, end, ImageSpan.class);
+                        if(includingSpans.length != 0){
+                            ImageSpan lastSpan = includingSpans[includingSpans.length-1];
+                            int endPoint = spanned.getSpanEnd(lastSpan);
+                            if(end == endPoint)
+                                super.draw(canvas, text, start, end, x, top, y, bottom, paint);
+                        }
+                    }
+                    else
+                        super.draw(canvas, text, start, end, x, top, y, bottom, paint);
+                }
+            }, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
             sb.append(getDelimiter());
         }
@@ -321,8 +360,15 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         updateFilteredItems(getLastCommaValue());
     }
 
-    public Hashtable<String, T> getCheckedItems(){
-        return mSelectedItems;
+    public List<T> getCheckedItems(){
+        SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
+        List<T> list = new ArrayList<T>();
+        for(int i = 0; i < checkedItemPositions.size(); i++){
+            if(checkedItemPositions.get(i))
+                list.add(adapter.getItem(i));
+        }
+
+        return list;
     }
 
     protected TextView createItemTextView(String text){
@@ -344,7 +390,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         Bitmap cacheBmp = textView.getDrawingCache();
         Bitmap viewBmp = cacheBmp.copy(Bitmap.Config.ARGB_8888, true);
         textView.destroyDrawingCache();
-        return new BitmapDrawable(getContext().getResources(), viewBmp);
+        BitmapDrawable bd = new BitmapDrawable(getContext().getResources(), viewBmp);
+        bd.setBounds(0, 0, viewBmp.getWidth(), viewBmp.getHeight());
+
+        return bd;
     }
 
     private class BubbleWatcher extends TextKeyListener implements TextWatcher {
@@ -420,6 +469,47 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         public int getInputType() {
             return InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
         }
+    }
+
+    private static class SavedState implements Parcelable{
+        public Parcelable wrappedState;
+        public Parcelable listViewState;
+        public List<String> orderedItems;
+
+        private SavedState(Parcelable input, Parcelable lvState, List<String> ordered) {
+            listViewState = lvState;
+            wrappedState = input;
+            orderedItems = ordered;
+        }
+
+        public SavedState(Parcel in) {
+            listViewState = in.readParcelable(ClassLoader.getSystemClassLoader());
+            wrappedState = in.readParcelable(ClassLoader.getSystemClassLoader());
+            orderedItems = new ArrayList<String>();
+            in.readStringList(orderedItems);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeParcelable(listViewState, flags);
+            dest.writeParcelable(wrappedState, flags);
+            dest.writeStringList(orderedItems);
+        }
+
+        public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 
 }

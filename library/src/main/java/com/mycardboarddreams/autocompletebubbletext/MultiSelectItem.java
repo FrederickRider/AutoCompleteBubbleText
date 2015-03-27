@@ -1,6 +1,8 @@
 package com.mycardboarddreams.autocompletebubbletext;
 
-public interface MultiSelectItem {
+import android.os.Parcelable;
+
+public interface MultiSelectItem extends Parcelable{
 
     public String getId();
     public String getReadableName();
