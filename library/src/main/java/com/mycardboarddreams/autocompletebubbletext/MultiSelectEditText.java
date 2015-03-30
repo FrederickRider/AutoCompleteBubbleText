@@ -298,7 +298,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             tv.setTextColor(getResources().getColor(android.R.color.black));
 
             BitmapDrawable bd = convertViewToDrawable(tv);
-            bd.setBounds(0, 0, bd.getIntrinsicWidth(), bd.getIntrinsicHeight());
 
             sb.append(name);
 
@@ -347,7 +346,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         Bitmap cacheBmp = textView.getDrawingCache();
         Bitmap viewBmp = cacheBmp.copy(Bitmap.Config.ARGB_8888, true);
         textView.destroyDrawingCache();
-        return new BitmapDrawable(getContext().getResources(), viewBmp);
+        BitmapDrawable bd = new BitmapDrawable(getContext().getResources(), viewBmp);
+        bd.setBounds(0, 0, viewBmp.getWidth(), viewBmp.getHeight());
+
+        return bd;
     }
 
     private class BubbleWatcher extends TextKeyListener implements TextWatcher {
