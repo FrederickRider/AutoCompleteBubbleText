@@ -3,6 +3,7 @@ package com.mycardboarddreams.autocompletebubbletext;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -303,7 +304,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
             final int start = sb.length() - name.length();
             final int end = sb.length();
-            sb.setSpan(new ImageSpan(bd, chatId), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new BubbleSpan(bd, itemId), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
             sb.append(getDelimiter());
         }
@@ -421,6 +422,29 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         @Override
         public int getInputType() {
             return InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+        }
+    }
+
+    private static class BubbleSpan extends ImageSpan {
+
+        public BubbleSpan(Drawable d, String source) {
+            super(d, source);
+        }
+
+        @Override
+        public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+            if(text instanceof Spannable){
+                Spannable spanned = ((Spannable)text);
+                ImageSpan[] includingSpans = spanned.getSpans(0, end, ImageSpan.class);
+                if(includingSpans.length != 0){
+                    ImageSpan lastSpan = includingSpans[includingSpans.length-1];
+                    int endPoint = spanned.getSpanEnd(lastSpan);
+                    if(end == endPoint)
+                        super.draw(canvas, text, start, end, x, top, y, bottom, paint);
+                }
+            }
+            else
+                super.draw(canvas, text, start, end, x, top, y, bottom, paint);
         }
     }
 
