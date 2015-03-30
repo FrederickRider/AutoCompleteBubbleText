@@ -32,8 +32,7 @@ import java.util.Set;
 public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
 
-    private final Hashtable<String, T> mSelectedItems = new Hashtable<String, T>();
-    List<String> orderedItems = new ArrayList<String>();
+    List<String> checkedIds = new ArrayList<String>();
 
     private int bubbleDrawableResource;
     private ListView listView;
@@ -223,14 +222,12 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     private void updateListViewCheckState() {
         final int count = adapter.getCount();
-        final Hashtable<String, T> checkedContacts = getCheckedItems();
-        Set<String> ids = checkedContacts.keySet();
 
         for (int i = 0; i < count; i++){
             final T listItem = adapter.getItem(i);
             if (listItem != null) {
                 final String listChatId = listItem.getId();
-                if (ids.contains(listChatId)) {
+                if (checkedIds.contains(listChatId)) {
                     listView.setItemChecked(i, true);
                 } else {
                     listView.setItemChecked(i, false);
@@ -241,8 +238,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void addCheckedItem(T item){
         final String id = item.getId();
-        mSelectedItems.put(id, item);
-        orderedItems.add(id);
+        checkedIds.add(id);
     }
 
     public void removeCheckedItem(T item){
@@ -251,8 +247,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     public void removeCheckedItem(String id){
-        mSelectedItems.remove(id);
-        orderedItems.remove(id);
+        checkedIds.remove(id);
     }
 
     public void addAllItems(List<T> allItems){
@@ -281,7 +276,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     public int getCheckedItemsCount(){
-        return mSelectedItems.size();
+        return listView.getCheckedItemPositions().size();
     }
 
     /**
@@ -294,9 +289,9 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void setString(){
         final SpannableStringBuilder sb = new SpannableStringBuilder();
-        for (String chatId : orderedItems) {
-            final T item = mSelectedItems.get(chatId);
-            String name = " " + item.getReadableName() + " ";
+        for (String itemId : checkedIds) {
+            final T item = findById(itemId);
+            String name = item.getReadableName();
 
             TextView tv = createItemTextView(name);
             tv.setTextColor(getResources().getColor(android.R.color.black));
@@ -321,8 +316,15 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         updateFilteredItems(getLastCommaValue());
     }
 
-    public Hashtable<String, T> getCheckedItems(){
-        return mSelectedItems;
+    private T findById(String id){
+        if(originalItems == null || originalItems.size() == 0)
+            return null;
+
+        for(T item : originalItems){
+            if(TextUtils.equals(id, item.getId()))
+                return item;
+        }
+        return null;
     }
 
     protected TextView createItemTextView(String text){
