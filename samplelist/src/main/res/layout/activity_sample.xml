@@ -9,7 +9,7 @@
         android:id="@+id/auto_text_complete"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/holo_blue_dark"
         android:padding="5dp"
         android:background="#FFEEEEEE"/>
 

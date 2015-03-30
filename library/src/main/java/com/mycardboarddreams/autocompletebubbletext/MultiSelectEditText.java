@@ -120,7 +120,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             throw new IllegalStateException("The resource drawable for the bubble cannot be null");
     }
 
-    private String getLastCommaValue() {
+    private String getLastDelineatedValue() {
         String fullText = getText().toString();
 
         if(TextUtils.isEmpty(fullText))
@@ -228,8 +228,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         for (int i = 0; i < count; i++){
             final T listItem = adapter.getItem(i);
             if (listItem != null) {
-                final String listChatId = listItem.getId();
-                if (checkedIds.contains(listChatId)) {
+                final String listItemId = listItem.getId();
+                if (checkedIds.contains(listItemId)) {
                     listView.setItemChecked(i, true);
                 } else {
                     listView.setItemChecked(i, false);
@@ -254,7 +254,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void addAllItems(List<T> allItems){
         originalItems = allItems;
-        updateFilteredItems(getLastCommaValue());
+        updateFilteredItems(getLastDelineatedValue());
     }
 
     public void clearAllItems(){
@@ -274,7 +274,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         originalItems = newOriginalItems;
 
-        updateFilteredItems(getLastCommaValue());
+        updateFilteredItems(getLastDelineatedValue());
     }
 
     public int getCheckedItemsCount(){
@@ -296,7 +296,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             String name = item.getReadableName();
 
             TextView tv = createItemTextView(name);
-            tv.setTextColor(getResources().getColor(android.R.color.black));
+            tv.setTextColor(getCurrentTextColor());
 
             BitmapDrawable bd = convertViewToDrawable(tv);
 
@@ -314,7 +314,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         if (position < 0) position = 0;
         setSelection(position);
 
-        updateFilteredItems(getLastCommaValue());
+        updateFilteredItems(getLastDelineatedValue());
     }
 
     private T findById(String id){
@@ -379,7 +379,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            final String lastCommaValue = getLastCommaValue();
+            final String lastCommaValue = getLastDelineatedValue();
             updateFilteredItems(lastCommaValue);
 
             Editable message = getEditableText();
