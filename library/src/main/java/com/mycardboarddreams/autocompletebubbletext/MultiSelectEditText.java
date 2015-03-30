@@ -26,9 +26,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
 
 public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
@@ -43,16 +41,19 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public MultiSelectEditText(Context context) {
         super(context);
-        init();
     }
 
     public MultiSelectEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public MultiSelectEditText(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
         init();
     }
 
