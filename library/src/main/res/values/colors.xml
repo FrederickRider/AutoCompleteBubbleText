@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="default_bubble_background_color">#FF66E09B</color>
-    <color name="checked_color">#FFAAAAFF</color>
-    <color name="unchecked_color">#00FFFFFF</color>
+    <color name="unchecked_color">#FF66E09B</color>
+    <color name="background">#FF77aaaa</color>
+    <color name="default_bubble_background_color">#FF99ff77</color>
+    <color name="checked_color">#FFeecc44</color>
+    <color name="bubble_border">#FFeeff33</color>
+    <color name="text_color">#FF5599ff</color>
+    <color name="edit_text_background">#FFaaffee</color>
 </resources>
