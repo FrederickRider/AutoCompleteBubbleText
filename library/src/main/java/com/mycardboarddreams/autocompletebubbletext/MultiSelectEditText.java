@@ -30,7 +30,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
@@ -39,7 +41,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private ListView listView;
     private ArrayAdapter<T> adapter;
 
-    private List<T> originalItems;
+    final private List<T> originalItems = new ArrayList<T>();
+    final private Set<String> checkedIds = new HashSet<String>();
 
     private BubbleWatcher watcher;
 
@@ -69,6 +72,12 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                SparseBooleanArray checked = listView.getCheckedItemPositions();
+                if(checked.get(position))
+                    addItemChecked(adapter.getItem(position));
+                else
+                    removeItemChecked(adapter.getItem(position));
+
                 setString();
             }
         });
@@ -77,9 +86,25 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         addTextChangedListener(watcher);
 
-        updateFilteredItems("");
-
         setMinHeight(getPaddingBottom() + getPaddingTop() + calculateLineHeight());
+    }
+
+    private void addItemChecked(T item){
+        checkedIds.add(item.getId());
+    }
+
+    private void removeItemChecked(T item){
+        checkedIds.remove(item.getId());
+    }
+
+    private void setCheckedItems() {
+        for(int i = 0; i < adapter.getCount(); i++){
+            T item = adapter.getItem(i);
+            if(checkedIds.contains(item.getId()))
+                listView.setItemChecked(i, true);
+            else
+                listView.setItemChecked(i, false);
+        }
     }
 
     private void updateFilteredItems(String lastValue){
@@ -93,6 +118,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             }
 
             adapter.notifyDataSetChanged();
+
+            setCheckedItems();
         }
     }
 
@@ -218,7 +245,11 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     }
 
     public void addAllItems(List<T> allItems){
-        originalItems = allItems;
+        clearAllItems();
+
+        originalItems.addAll(allItems);
+        adapter.addAll(allItems);
+
         updateFilteredItems(getLastDelineatedValue());
     }
 
@@ -230,10 +261,11 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     public void removeItem(String itemName){
 
         for(int i = 0; i < adapter.getCount(); i++) {
-            String id = adapter.getItem(i).getId();
+            T item = adapter.getItem(i);
 
-            if(TextUtils.equals(id, itemName)){
+            if(TextUtils.equals(item.getId(), itemName)){
                 listView.setItemChecked(i, false);
+                removeItemChecked(item);
             }
         }
 
