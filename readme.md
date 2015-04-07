@@ -9,6 +9,9 @@ You can also use the autocomplete filtering function of the EditText to filter i
 An example use is in contact lists that need to be filtered and keep checked states.
 
 ![Sample image 1](https://github.com/FrederickRider/AutoCompleteBubbleText/blob/master/images/Screenshot_1.png)
+
+You can also filter the list by text after the last delimiter:
+
 ![Sample image 2](https://github.com/FrederickRider/AutoCompleteBubbleText/tree/master/images/Screenshot_2.png)
 
 ## Usage
