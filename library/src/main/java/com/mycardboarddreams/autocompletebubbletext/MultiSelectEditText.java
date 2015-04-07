@@ -41,6 +41,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     private List<T> originalItems;
 
+    private BubbleWatcher watcher;
+
     public MultiSelectEditText(Context context) {
         super(context);
     }
@@ -70,6 +72,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
                 setString();
             }
         });
+
+        watcher = new BubbleWatcher();
+
+        addTextChangedListener(watcher);
 
         updateFilteredItems("");
 
@@ -278,8 +284,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         if (position < 0) position = 0;
         setSelection(position);
 
-        final BubbleWatcher watcher = new BubbleWatcher();
-
         Editable editable = getText();
         editable.setSpan(watcher, 0, editable.length(), 0);
 
@@ -311,7 +315,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return bd;
     }
 
-    private class BubbleWatcher implements SpanWatcher {
+    private class BubbleWatcher implements SpanWatcher, TextWatcher {
 
         @Override
         public void onSpanAdded(Spannable text, Object what, int start, int end) {
@@ -324,9 +328,27 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         @Override
         public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
             if (what instanceof ImageSpan){
+                if(ostart != nstart && (ostart - nstart) == (oend - nend))
+                    return;
+
                 String readableName = ((ImageSpan) what).getSource();
                 removeItem(readableName);
             }
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            updateFilteredItems(getLastDelineatedValue());
         }
     }
 
