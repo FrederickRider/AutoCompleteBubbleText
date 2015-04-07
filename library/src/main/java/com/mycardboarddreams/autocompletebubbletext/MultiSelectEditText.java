@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.SpanWatcher;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -16,6 +17,7 @@ import android.text.TextWatcher;
 import android.text.method.TextKeyListener;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.view.View;
@@ -61,9 +63,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         setInitialComponents();
 
         setFreezesText(true);
-
-        final BubbleWatcher watcher = new BubbleWatcher(this, TextKeyListener.Capitalize.NONE, false);
-        setKeyListener(watcher);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -279,6 +278,11 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         if (position < 0) position = 0;
         setSelection(position);
 
+        final BubbleWatcher watcher = new BubbleWatcher();
+
+        Editable editable = getText();
+        editable.setSpan(watcher, 0, editable.length(), 0);
+
         updateFilteredItems(getLastDelineatedValue());
     }
 
@@ -307,24 +311,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return bd;
     }
 
-    private class BubbleWatcher extends TextKeyListener implements TextWatcher {
-        private final ArrayList<ImageSpanContainer> mBubblesToRemove = new ArrayList<ImageSpanContainer>();
-
-        public BubbleWatcher(MultiSelectEditText editText, Capitalize cap, boolean autotext) {
-            super(cap, autotext);
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-        }
+    private class BubbleWatcher implements SpanWatcher {
 
         @Override
         public void onSpanAdded(Spannable text, Object what, int start, int end) {
@@ -340,11 +327,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
                 String readableName = ((ImageSpan) what).getSource();
                 removeItem(readableName);
             }
-        }
-
-        @Override
-        public int getInputType() {
-            return InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
         }
     }
 
