@@ -16,6 +16,8 @@ import android.text.TextWatcher;
 import android.text.method.TextKeyListener;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
+import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -30,8 +32,6 @@ import java.util.List;
 
 public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private static final String TAG = MultiSelectEditText.class.getSimpleName();
-
-    List<String> checkedIds = new ArrayList<String>();
 
     private int bubbleDrawableResource;
     private ListView listView;
@@ -68,16 +68,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                final T item = (T) parent.getItemAtPosition(position);
-                if (listView.isItemChecked(position)) {
-                    addCheckedItem(item);
-                } else {
-                    removeCheckedItem(item);
-                }
                 setString();
-
-                updateListViewCheckState();
             }
         });
 
@@ -221,37 +212,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return listView;
     }
 
-
-    private void updateListViewCheckState() {
-        final int count = adapter.getCount();
-
-        for (int i = 0; i < count; i++){
-            final T listItem = adapter.getItem(i);
-            if (listItem != null) {
-                final String listItemId = listItem.getId();
-                if (checkedIds.contains(listItemId)) {
-                    listView.setItemChecked(i, true);
-                } else {
-                    listView.setItemChecked(i, false);
-                }
-            }
-        }
-    }
-
-    public void addCheckedItem(T item){
-        final String id = item.getId();
-        checkedIds.add(id);
-    }
-
-    public void removeCheckedItem(T item){
-        final String id = item.getId();
-        removeCheckedItem(id);
-    }
-
-    public void removeCheckedItem(String id){
-        checkedIds.remove(id);
-    }
-
     public void addAllItems(List<T> allItems){
         originalItems = allItems;
         updateFilteredItems(getLastDelineatedValue());
@@ -259,20 +219,20 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void clearAllItems(){
         originalItems.clear();
+        adapter.clear();
     }
 
     public void removeItem(String itemName){
 
-        List<T> newOriginalItems = new ArrayList<T>();
+        for(int i = 0; i < adapter.getCount(); i++) {
+            String id = adapter.getItem(i).getId();
 
-        for(int i = 0; i < originalItems.size(); i++) {
-            String name = originalItems.get(i).getReadableName();
-
-            if(!TextUtils.equals(name, itemName))
-                newOriginalItems.add(originalItems.get(i));
+            if(TextUtils.equals(id, itemName)){
+                listView.setItemChecked(i, false);
+            }
         }
 
-        originalItems = newOriginalItems;
+        setString();
 
         updateFilteredItems(getLastDelineatedValue());
     }
@@ -291,8 +251,13 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
     public void setString(){
         final SpannableStringBuilder sb = new SpannableStringBuilder();
-        for (String itemId : checkedIds) {
-            final T item = findById(itemId);
+        SparseBooleanArray checked = listView.getCheckedItemPositions();
+
+        for (int i = 0; i < adapter.getCount(); i++) {
+            if(!checked.get(i))
+                continue;
+
+            final T item = adapter.getItem(i);
             String name = item.getReadableName();
 
             TextView tv = createItemTextView(name);
@@ -304,7 +269,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
             final int start = sb.length() - name.length();
             final int end = sb.length();
-            sb.setSpan(new BubbleSpan(bd, itemId), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new BubbleSpan(bd, item.getId()), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
             sb.append(getDelimiter());
         }
@@ -315,17 +280,6 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         setSelection(position);
 
         updateFilteredItems(getLastDelineatedValue());
-    }
-
-    private T findById(String id){
-        if(originalItems == null || originalItems.size() == 0)
-            return null;
-
-        for(T item : originalItems){
-            if(TextUtils.equals(id, item.getId()))
-                return item;
-        }
-        return null;
     }
 
     protected TextView createItemTextView(String text){
@@ -362,48 +316,14 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            if (count > 0) {
-                int end = start + count;
-                Editable message = getEditableText();
-                ImageSpan[] list = message.getSpans(start, end, ImageSpan.class);
-
-                for (ImageSpan span : list) {
-                    int spanStart = message.getSpanStart(span);
-                    int spanEnd = message.getSpanEnd(span);
-                    if ((spanStart < end) && (spanEnd > start)) {
-                        mBubblesToRemove.add(new ImageSpanContainer(span, spanStart, spanEnd));
-                    }
-                }
-            }
         }
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            final String lastCommaValue = getLastDelineatedValue();
-            updateFilteredItems(lastCommaValue);
-
-            Editable message = getEditableText();
-
-            List<ImageSpanContainer> removeList = new ArrayList<ImageSpanContainer>();
-            for (ImageSpanContainer container : mBubblesToRemove){
-                ImageSpan span = container.getSpan();
-                int spanStart =  container.getSpanStart();
-                int spanEnd = container.getSpanEnd();
-
-                if (message.length() >= spanEnd && spanStart != spanEnd){
-                    String id = span.getSource();
-                    removeCheckedItem(id);
-                    setString();
-                    removeList.add(container);
-                }
-            }
-
-            mBubblesToRemove.removeAll(removeList);
         }
 
         @Override
         public void afterTextChanged(Editable s) {
-            updateListViewCheckState();
         }
 
         @Override
@@ -412,14 +332,14 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
 
         @Override
         public void onSpanRemoved(Spannable text, Object what, int start, int end) {
-            if (what instanceof ImageSpan){
-                String readableName = ((ImageSpan) what).getSource();
-                removeItem(readableName);
-            }
         }
 
         @Override
         public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
+            if (what instanceof ImageSpan){
+                String readableName = ((ImageSpan) what).getSource();
+                removeItem(readableName);
+            }
         }
 
         @Override
