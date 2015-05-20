@@ -14,7 +14,9 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.text.method.TextKeyListener;
+import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -40,6 +42,8 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
     private int bubbleDrawableResource;
     private ListView listView;
     private ArrayAdapter<T> adapter;
+
+    protected BubbleClickListener<T> listener;
 
     final private List<T> originalItems = new ArrayList<T>();
     final private Set<String> checkedIds = new HashSet<String>();
@@ -68,6 +72,7 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         setInitialComponents();
 
         setFreezesText(true);
+        setMovementMethod(LinkMovementMethod.getInstance());
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -286,6 +291,14 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
         return ", ";
     }
 
+    /**
+     * Call this to set a listener for bubble clicks
+     * @param listener
+     */
+    public void setBubbleClickListener(BubbleClickListener<T> listener){
+        this.listener = listener;
+    }
+
     public void setString(){
         final SpannableStringBuilder sb = new SpannableStringBuilder();
         SparseBooleanArray checked = listView.getCheckedItemPositions();
@@ -307,6 +320,14 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             final int start = sb.length() - name.length();
             final int end = sb.length();
             sb.setSpan(new BubbleSpan(bd, item.getId()), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new ClickableSpan(){
+
+                @Override
+                public void onClick(View view) {
+                    if(listener != null) listener.onClick(item);
+                }
+            }, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
 
             sb.append(getDelimiter());
         }
@@ -405,6 +426,10 @@ public class MultiSelectEditText<T extends MultiSelectItem> extends EditText {
             else
                 super.draw(canvas, text, start, end, x, top, y, bottom, paint);
         }
+    }
+
+    public interface BubbleClickListener<T>{
+        void onClick(T item);
     }
 
 }

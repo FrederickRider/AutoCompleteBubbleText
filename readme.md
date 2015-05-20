@@ -107,6 +107,15 @@ protected void onCreate(Bundle savedInstanceState) {
 
     FrameLayout frame = (FrameLayout)findViewById(R.id.auto_list_container);
     frame.addView(list);
+
+    //Set a listener on bubble clicks
+    editText.setBubbleClickListener(new MultiSelectEditText.BubbleClickListener<SampleItem>() {
+
+        @Override
+        public void onClick(SampleItem item) {
+            Log.d(TAG, "Item: " + item.getReadableName());
+        }
+    });
 }
 ````````````````
 
@@ -159,4 +168,11 @@ String getDelimiter()
  * after the delimiter (default is ','), lastCommaValue.
  */
 filterData(String lastCommaValue)
+````````````````
+````````````````
+/**
+ * Call this to pass a listener for clicks on bubbles
+ * Pass in a class that implements BubbleClickListener
+ */
+setBubbleClickListener(BubbleClickListener<T> listener)
 ````````````````

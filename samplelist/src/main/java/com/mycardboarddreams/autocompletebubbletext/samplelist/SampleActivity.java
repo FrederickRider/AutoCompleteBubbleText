@@ -2,6 +2,7 @@ package com.mycardboarddreams.autocompletebubbletext.samplelist;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -13,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SampleActivity extends Activity {
+
+    private static final String TAG = SampleActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,5 +45,14 @@ public class SampleActivity extends Activity {
 
         FrameLayout frame = (FrameLayout)findViewById(R.id.auto_list_container);
         frame.addView(list);
+
+        //Set a listener on bubble clicks
+        editText.setBubbleClickListener(new MultiSelectEditText.BubbleClickListener<SampleItem>() {
+
+            @Override
+            public void onClick(SampleItem item) {
+                Log.d(TAG, "Item: " + item.getReadableName());
+            }
+        });
     }
 }
