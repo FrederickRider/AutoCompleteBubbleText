@@ -18,7 +18,7 @@ You can also filter the list by text after the last delimiter:
 
 The sample activity shows a basic usage.
 
-````````````````
+```xml
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -45,7 +45,7 @@ The sample activity shows a basic usage.
 
 Create some object that implements MultiSelectItem
 
-````````````````
+```java
 public class SampleItem implements MultiSelectItem {
 
     private final String mReadableName;
@@ -71,11 +71,11 @@ public class SampleItem implements MultiSelectItem {
         return mReadableName;
     }
 }
-````````````````
+```
 
 Once you've set up the layout, pull the ListView out of the EditText, and put it wherever in the layout you like:
 
-````````````````
+```java
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_sample);
@@ -117,17 +117,17 @@ protected void onCreate(Bundle savedInstanceState) {
         }
     });
 }
-````````````````
+```
 
 ### You must call getListView():
 
-````````````````
+```java
 /**
  * Once the ListView is created, you must fetch
  * it and add it as a child of some other layout.
  */
 ListView getListView()
-````````````````
+```
 
 
 ## Customization
@@ -136,43 +136,41 @@ You can customize most parts of the view.
 
 ### You may also override the following methods:
 
-````````````````
+```java
 /**
  * Override this to return a custom ListView.
  */
 ListView onCreateListView()
-````````````````
-````````````````
+```
+
+```java
 /**
  * Override this to return a custom Adapter,
  * which (currently) must be an ArrayAdapter.
  */
 ArrayAdapter<T> onCreateAdapter()
-````````````````
-````````````````
+
 /**
  * Override this to return the resource
  * representing the bubble drawable.
  */
 int getBubbleResource()
-````````````````
-````````````````
+
+
 /**
  * Override this to return a different delimiter string.
  */
 String getDelimiter()
-````````````````
-````````````````
+
 /**
  * Override this to return filtered results given the last value
  * after the delimiter (default is ','), lastCommaValue.
  */
 filterData(String lastCommaValue)
-````````````````
-````````````````
+
 /**
  * Call this to pass a listener for clicks on bubbles
  * Pass in a class that implements BubbleClickListener
  */
 setBubbleClickListener(BubbleClickListener<T> listener)
-````````````````
+```
